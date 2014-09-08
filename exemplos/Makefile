@@ -9,16 +9,16 @@ INC_DIR=../include
 all: exemplo mandel teste_vetor teste_prio
 
 exemplo: exemplo.c $(LIB_DIR)/libsthread.a
-	$(CC) -o exemplo exemplo.c -L$(LIB_DIR) -lsthread -Wall
+	$(CC) -o exemplo exemplo.c -L$(LIB_DIR) -lsthread -Wall -g
 
 teste_vetor: teste_vetor.c $(LIB_DIR)/libsthread.a
-	$(CC) -o teste_vetor teste_vetor.c -L$(LIB_DIR) -lsthread -Wall
+	$(CC) -o teste_vetor teste_vetor.c -L$(LIB_DIR) -lsthread -Wall -g
 
 teste_prio: teste_prio.c $(LIB_DIR)/libsthread.a
-	$(CC) -o teste_prio teste_prio.c -L$(LIB_DIR) -lsthread -Wall
+	$(CC) -o teste_prio teste_prio.c -L$(LIB_DIR) -lsthread -Wall -g
 
 mandel: mandel.c $(LIB_DIR)/libsthread.a
-	$(CC) -o mandel mandel.c -L$(LIB_DIR) -lsthread -lm -Wall
+	$(CC) -o mandel mandel.c -L$(LIB_DIR) -lsthread -lm -Wall -g
 
 clean:
 	rm -rf exemplo mandel teste_vetor teste_prio *~

@@ -4,7 +4,7 @@
  * preencher um vetor de 250 caracteres.
  */
 
-#include	"../include/mthread.h"
+#include	"../include/sthread.h"
 #include	<stdio.h>
 #include        <stdlib.h>
 
@@ -17,6 +17,7 @@ int  inc = 0;
 void *func(void *arg){
 
    while ( inc < MAX_SIZE ) {
+   	   printf("Adding %d.\n", (int)arg);
        vetor[inc] = (int)arg;
        inc++;
        if ( (inc % 20) == 0 )

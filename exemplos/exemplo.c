@@ -9,6 +9,7 @@
  */
 
 #include "../include/sthread.h"
+#include <stdio.h>
 
 void func0(void *arg) {
 
@@ -28,12 +29,13 @@ int main(int argc, char *argv[]) {
 
     id0 = screate(0, func0, (void *)&i);
     id1 = screate(1, func1, (void *)&i);
-
+	printf("ID0: %d, ID1: %d\n", id0, id1);
     printf("Eu sou a main após a criação de ID0 e ID1\n");
 
     swait(id0);
     swait(id1);
 
     printf("Eu sou a main voltando para terminar o programa\n");
+    return 0;
 }
 

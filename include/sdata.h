@@ -28,7 +28,7 @@
     ucontext_t* context;
     int priority;
 	// ....
-    struct tcb *thread_waiting;
+    int tid_waiting;
 	struct tcb *next;
  } TCB;
  
@@ -45,6 +45,7 @@ typedef struct mutex {
 typedef TCB* tcb_queue;
 
 int insert_queue(tcb_queue*, tcb_queue*, TCB*);
-int remove_queue(tcb_queue*, tcb_queue*, TCB**);
+int pop_queue(tcb_queue*, tcb_queue*, TCB**);
+int remove_queue(tcb_queue*, tcb_queue*, int, TCB**);
 
 #endif

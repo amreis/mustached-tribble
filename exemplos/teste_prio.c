@@ -9,7 +9,7 @@
  * (baixa). Isso altera a saída do programa em questão.
  */
 
-#include	"../include/mthread.h"
+#include	"../include/sthread.h"
 #include	<stdio.h>
 #include        <stdlib.h>
 
