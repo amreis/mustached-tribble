@@ -78,6 +78,7 @@ void killthread()
                         first);
         running->tid_waiting = -1;
     }
+    free(running->context->uc_stack.ss_sp);
     free(running);
     running = NULL;
     scheduler();
@@ -183,8 +184,11 @@ int slock(smutex_t *mtx)
         // Block current thread!
         running->estado = STATE_BLOCKED;
         insert_queue(&mtx->first, &mtx->last, running);
-        running = NULL;
         scheduler();
+        if (mtx->flag == 0)
+        {
+            mtx->flag = 1;
+        }
         return 0;
     }
     else
@@ -209,6 +213,8 @@ int sunlock(smutex_t *mtx)
         // Insert in the ready_queue
         insert_queue(&ready_queue[first->priority], &ready_queue_end[first->priority], first);
     }
+    // Critic Section is free if there are no threads in its queue.
+    // Else, it is taken.
     mtx->flag = 0;
     return 0;
 }
