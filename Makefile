@@ -13,11 +13,11 @@ INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all: sdata.o
+all: $(BIN_DIR)/sdata.o
 	ar crs $(LIB_DIR)/libsthread.a $(SRC_DIR)/sdata.o
-sdata.o:
-	$(CC) -I$(INC_DIR) -c -o $(SRC_DIR)/sdata.o $(SRC_DIR)/sdata.c -Wall -g
-#clean:#
-#	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_BIN)/*~ $(INC_BIN)/*~ *~
+$(BIN_DIR)/sdata.o:
+	$(CC) -I$(INC_DIR) -c -o $(BIN_DIR)/sdata.o $(SRC_DIR)/sdata.c -Wall
+clean:
+	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
 
 

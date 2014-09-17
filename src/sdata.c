@@ -1,5 +1,5 @@
-#include "sthread.h"
 #include "sdata.h"
+#include "sthread.h"
 
 tcb_queue ready_queue[3] = {NULL, NULL, NULL};
 tcb_queue ready_queue_end[3] = {NULL, NULL, NULL};
@@ -126,9 +126,14 @@ int init_thread(TCB* newThread, int prio, void (*start)(void*), void* arg)
     return 0;
 }
 
+int validPriority(int prio)
+{
+    return (prio >= 0 && prio <= 2);
+}
+
 int screate(int prio, void (*start)(void*), void *arg)
 {
-    if (prio < 0 || prio > 2) return -1;
+    if (! validPriority(prio)) return -1;
     
     if (KILLTHREAD_CONTEXT == NULL)
     {
@@ -167,7 +172,7 @@ int smutex_init(smutex_t *mtx)
 {
     if (mtx->first != NULL || mtx->last != NULL)
         return -1;
-    mtx->flag = 0;
+    mtx->flag = MUTEX_FREE;
     mtx->first = NULL;
     mtx->last = NULL;
     return 0;
@@ -179,21 +184,20 @@ int slock(smutex_t *mtx)
     {
         if (createMainThread() != 0) return -1;
     }
-    if (mtx->flag != 0)
+    if (mtx->flag != MUTEX_FREE)
     {
         // Block current thread!
+        do {
         running->estado = STATE_BLOCKED;
         insert_queue(&mtx->first, &mtx->last, running);
         scheduler();
-        if (mtx->flag == 0)
-        {
-            mtx->flag = 1;
-        }
+        } while (mtx->flag == MUTEX_IN_USE);   
+        mtx->flag = MUTEX_IN_USE;
         return 0;
     }
     else
     {
-        mtx->flag = 1;
+        mtx->flag = MUTEX_IN_USE;
         return 0;
     }
     return 0;

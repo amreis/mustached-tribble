@@ -8,16 +8,21 @@
  /*
   * Exemplo de estrutura de dados da Thread Control Block
   */
-  #ifndef SDATA_H
-  #define SDATA_H
+  #ifndef __SDATA_H__
+  #define __SDATA_H__
   
   #define STATE_READY 0
   #define STATE_RUNNING 1
   #define STATE_BLOCKED 2
   
+  #define MUTEX_IN_USE 1
+  #define MUTEX_FREE 0
+  
   #define PRIORITY_HIGH 0
   #define PRIORITY_MEDIUM 1
   #define PRIORITY_LOW 2
+  
+
   
   #include <ucontext.h>
   #include <stdlib.h>
