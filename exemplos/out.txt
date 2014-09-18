@@ -1,0 +1,54 @@
+Main dando yield...
+Thread 5
+Thread 6
+Thread 7
+Thread 8
+Thread 9
+Thread 5
+Thread 6
+Thread 7
+Thread 8
+Thread 9
+Thread 5
+Thread 6
+Thread 7
+Thread 8
+Thread 9
+Thread 5
+Thread 6
+Thread 7
+Thread 8
+Thread 9
+Thread 5
+Thread 6
+Thread 7
+Thread 8
+Thread 9
+Thread 0
+Thread 1
+Thread 2
+Thread 3
+Thread 4
+Thread 0
+Thread 1
+Thread 2
+Thread 3
+Thread 4
+Thread 0
+Thread 1
+Thread 2
+Thread 3
+Thread 4
+Thread 0
+Thread 1
+Thread 2
+Thread 3
+Thread 4
+Thread 0
+Thread 1
+Thread 2
+Thread 3
+Thread 4
+Main voltando do yield...
+Dando yield dnv pra ter ctz...
+Que que deu?
