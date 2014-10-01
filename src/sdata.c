@@ -154,7 +154,12 @@ int slock(smutex_t *mtx)
     {
         if (createMainThread() != 0) return -1;
     }
-    if (mtx->flag != MUTEX_FREE)
+    if (mtx->flag == MUTEX_FREE)
+    {
+        mtx->flag = MUTEX_IN_USE;
+        return 0;
+    }
+    else
     {
         // Block current thread!
         do
@@ -167,12 +172,6 @@ int slock(smutex_t *mtx)
         mtx->flag = MUTEX_IN_USE;
         return 0;
     }
-    else
-    {
-        mtx->flag = MUTEX_IN_USE;
-        return 0;
-    }
-    return 0;
 }
 
 int sunlock(smutex_t *mtx)
