@@ -14,8 +14,8 @@ BIN_DIR=./bin
 SRC_DIR=./src
 
 all: $(BIN_DIR)/sdata.o
-	ar crs $(LIB_DIR)/libsthread.a $(SRC_DIR)/sdata.o
-$(BIN_DIR)/sdata.o:
+	ar crs $(LIB_DIR)/libsthread.a $(BIN_DIR)/sdata.o
+$(BIN_DIR)/sdata.o: $(SRC_DIR)/sdata.c
 	$(CC) -I$(INC_DIR) -c -o $(BIN_DIR)/sdata.o $(SRC_DIR)/sdata.c -Wall
 clean:
 	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~

@@ -15,62 +15,34 @@ void scheduler()
 {
     TCB* out = NULL;
     TCB* cur = NULL;
-    if (ready_queue[0] != NULL)
+    int prio;
+    for (prio = PRIORITY_HIGH; prio <= PRIORITY_LOW; ++prio)
     {
-        if (pop_queue(&ready_queue[0], &ready_queue_end[0], &out) == 0)
+        if (ready_queue[prio] != NULL)
         {
-            cur = running;
-            running = out;
-            if (cur != NULL)
+            if (pop_queue(&ready_queue[prio], &ready_queue_end[prio], &out) == 0)
             {
-                swapcontext(cur->context, out->context);
-                return;
-            }   
-            setcontext(out->context);
-        }
-        else return;
-    }
-    else if (ready_queue[1] != NULL)
-    {
-        if (pop_queue(&ready_queue[1], &ready_queue_end[1], &out) == 0)
-        {
-            cur = running;
-            running = out;
-            if (cur != NULL)
-            {
-                swapcontext(cur->context, out->context);
-                return;
+                cur = running;
+                running = out;
+                if (cur != NULL)
+                {
+                    swapcontext(cur->context, out->context);
+                    return;
+                }
+                else { setcontext(out->context); return; }
             }
-            setcontext(out->context);
+            else return;
         }
-        else return;
     }
-    else if (ready_queue[2] != NULL)
-    {
-        if (pop_queue(&ready_queue[2], &ready_queue_end[2], &out) == 0)
-        {
-            cur = running;
-            running = out;
-            if (cur != NULL)
-            {
-                swapcontext(cur->context, out->context);
-                return;
-            }
-            setcontext(out->context);
-        }
-        else return;
-    }
-    else
-        return;
 }
 
 void killthread()
 {
-    
+
     if (running->tid_waiting != -1)
     {
         TCB *first;
-        if (remove_queue(&blocked_queue, &blocked_queue_end, 
+        if (remove_queue(&blocked_queue, &blocked_queue_end,
                         running->tid_waiting, &first) == -1)
             return;
         first->estado = STATE_READY;
@@ -106,7 +78,7 @@ int init_thread(TCB* newThread, int prio, void (*start)(void*), void* arg)
 {
     if (newThread == NULL)
         return -1;
-    
+
     newThread->tid = ++NEXT_TID;
     newThread->estado = STATE_READY;
     newThread->context = (ucontext_t*) malloc(sizeof(ucontext_t));
@@ -119,7 +91,7 @@ int init_thread(TCB* newThread, int prio, void (*start)(void*), void* arg)
     if (newThread->context->uc_stack.ss_sp == NULL)
         return -1;
     newThread->context->uc_stack.ss_size = SIGSTKSZ;
-    
+
     makecontext(newThread->context, (void (*)(void))start, 1, arg);
     newThread->priority = prio;
     newThread->next = NULL;
@@ -135,28 +107,27 @@ int validPriority(int prio)
 int screate(int prio, void (*start)(void*), void *arg)
 {
     if (! validPriority(prio)) return -1;
-    
+
     if (KILLTHREAD_CONTEXT == NULL)
     {
         KILLTHREAD_CONTEXT = (ucontext_t*) malloc(sizeof(ucontext_t));
         if (KILLTHREAD_CONTEXT == NULL)
             return -1;
-        // Perhaps main's context?
         KILLTHREAD_CONTEXT->uc_link = NULL;
         KILLTHREAD_CONTEXT->uc_stack.ss_sp = (char*) malloc(SIGSTKSZ);
         KILLTHREAD_CONTEXT->uc_stack.ss_size = SIGSTKSZ;
-        
+
         getcontext(KILLTHREAD_CONTEXT);
         makecontext(KILLTHREAD_CONTEXT, (void (*)(void)) killthread, 0, NULL);
     }
-    
+
     TCB *newThread = (TCB*) malloc(sizeof(TCB));
     if (init_thread(newThread, prio, start, arg) == -1)
         return -1;
     if (insert_queue(&ready_queue[prio], &ready_queue_end[prio], newThread) != 0)
         return -1;
     else
-    {        
+    {
         if (main_thread == NULL)
         {
             if (createMainThread() == 0)
@@ -171,8 +142,6 @@ int screate(int prio, void (*start)(void*), void *arg)
 // Inicialização da variável mutex.
 int smutex_init(smutex_t *mtx)
 {
-    if (mtx->first != NULL || mtx->last != NULL)
-        return -1;
     mtx->flag = MUTEX_FREE;
     mtx->first = NULL;
     mtx->last = NULL;
@@ -188,11 +157,13 @@ int slock(smutex_t *mtx)
     if (mtx->flag != MUTEX_FREE)
     {
         // Block current thread!
-        do {
-        running->estado = STATE_BLOCKED;
-        insert_queue(&mtx->first, &mtx->last, running);
-        scheduler();
-        } while (mtx->flag == MUTEX_IN_USE);   
+        do
+        {
+            running->estado = STATE_BLOCKED;
+            if (insert_queue(&mtx->first, &mtx->last, running) != 0)
+                return -1;
+            scheduler();
+        } while (mtx->flag == MUTEX_IN_USE);
         mtx->flag = MUTEX_IN_USE;
         return 0;
     }
@@ -218,8 +189,6 @@ int sunlock(smutex_t *mtx)
         // Insert in the ready_queue
         insert_queue(&ready_queue[first->priority], &ready_queue_end[first->priority], first);
     }
-    // Critic Section is free if there are no threads in its queue.
-    // Else, it is taken.
     mtx->flag = 0;
     return 0;
 }
@@ -231,7 +200,8 @@ int syield(void)
     TCB *out;
     out = running;
     out->estado = STATE_READY;
-    insert_queue(&ready_queue[out->priority], &ready_queue_end[out->priority], out);
+    if (insert_queue(&ready_queue[out->priority], &ready_queue_end[out->priority], out) != 0)
+        return -1;
     scheduler();
     return 0;
 }
@@ -240,58 +210,28 @@ int swait(int tid)
 {
     // Refactor later!
     TCB *first;
-    first = ready_queue[0];
-    while (first != NULL)
+    int i;
+    for (i = PRIORITY_HIGH; i <= PRIORITY_LOW; ++i)
     {
-        if (first->tid == tid)
+        first = ready_queue[i];
+        while (first != NULL)
         {
-            
-            if (first->tid_waiting != -1)
-                return -1;
-            first->tid_waiting = running->tid;
-            TCB *me = running;
-            me->estado = STATE_BLOCKED;
-            //running = NULL;
-            insert_queue(&blocked_queue, &blocked_queue_end, me);
-            scheduler();
-            return 0;
+            if (first->tid == tid)
+            {
+                if (first->tid_waiting != -1)
+                    return -1;
+                first->tid_waiting = running->tid;
+                TCB *me = running;
+                me->estado = STATE_BLOCKED;
+                if (insert_queue(&blocked_queue, &blocked_queue_end, me) != 0)
+                    return -1;
+                scheduler();
+                return 0;
+            }
+            else first = first->next;
         }
-        first = first->next;
     }
-    first = ready_queue[1];
-    while (first != NULL)
-    {
-        if (first->tid == tid)
-        {
-            if (first->tid_waiting != -1)
-                return -1;
-            first->tid_waiting = running->tid;
-            TCB *me = running;
-            me->estado = STATE_BLOCKED;
-            //running = NULL;
-            insert_queue(&blocked_queue, &blocked_queue_end, me);
-            scheduler();
-            return 0;
-        }
-        first = first->next;
-    }
-    first = ready_queue[2];
-    while (first != NULL)
-    {
-        if (first->tid == tid)
-        {
-            if (first->tid_waiting != -1)
-                return -1;
-            first->tid_waiting = running->tid;
-            TCB *me = running;
-            me->estado = STATE_BLOCKED;
-            //running = NULL;
-            insert_queue(&blocked_queue, &blocked_queue_end, me);
-            scheduler();
-            return 0;
-        }
-        first = first->next;        
-    }
+
     first = blocked_queue;
     while (first != NULL)
     {
@@ -303,20 +243,21 @@ int swait(int tid)
             TCB *me = running;
             me->estado = STATE_BLOCKED;
             //running = NULL;
-            insert_queue(&blocked_queue, &blocked_queue_end, me);
+            if (insert_queue(&blocked_queue, &blocked_queue_end, me) != 0)
+                return -1;
             scheduler();
             return 0;
         }
-        first = first->next;
-        
+        else first = first->next;
     }
+    // Didn't find thread to wait for, error.
     return -1;
 }
 
 int insert_queue(tcb_queue* queue_start, tcb_queue* queue_end, TCB* item)
 {
     if (queue_start == NULL) return -1;
-    
+
     if (*queue_start == NULL)
     {
         item->next = NULL;
@@ -328,7 +269,7 @@ int insert_queue(tcb_queue* queue_start, tcb_queue* queue_end, TCB* item)
     {
         // Should have fallen on the first case (if).
         if (*queue_end == NULL) return -1;
-        
+
         (*queue_end)->next = item;
         item->next = NULL;
         (*queue_end) = item;
@@ -339,9 +280,9 @@ int insert_queue(tcb_queue* queue_start, tcb_queue* queue_end, TCB* item)
 int pop_queue(tcb_queue* queue_start, tcb_queue* queue_end, TCB** out)
 {
     if (queue_start == NULL) return -1;
-    
+
     if (*queue_start == NULL) return -1;
-    
+
     else
     {
         *out = *queue_start;
@@ -356,20 +297,18 @@ int pop_queue(tcb_queue* queue_start, tcb_queue* queue_end, TCB** out)
 int remove_queue(tcb_queue* queue_start, tcb_queue* queue_end, int tid, TCB** out)
 {
     if (queue_start == NULL) return -1;
-    
+
     if (*queue_start == NULL) return -1;
-    
-    // Only one element.
-    if ((*queue_start)->next == NULL)
+
+    if ((*queue_start)->tid == tid)
     {
-        if ((*queue_start)->tid == tid)
-        {
-            (*out) = *queue_start;
-            *queue_start = *queue_end = NULL;
-            return 0;
-        }
-        return -1;
+        (*out) = *queue_start;
+        *queue_start = (*queue_start)->next;
+        if (*queue_start == NULL)
+            *queue_end = NULL;
+        return 0;
     }
+
     TCB *ant, *elem;
     ant = *queue_start;
     elem = ant->next;

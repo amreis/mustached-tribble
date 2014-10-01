@@ -12,7 +12,7 @@ void func4()
 	printf("GOT IT\n");
 	sunlock(&mutex);
 	printf("LERIGOOOOO.\n");
-	
+
 }
 
 void func3()
@@ -56,6 +56,7 @@ int main()
 	int tid1, tid2;
 	tid1 = screate(0, func, NULL);
 	tid2 = screate(1, func2, NULL);
-    syield();
+    swait(tid1);
+	swait(tid2);
     return 0;
 }
