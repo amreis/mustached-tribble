@@ -25,7 +25,7 @@ void scheduler()
             {
                 swapcontext(cur->context, out->context);
                 return;
-            }
+            }   
             setcontext(out->context);
         }
         else return;
@@ -79,6 +79,7 @@ void killthread()
         running->tid_waiting = -1;
     }
     free(running->context->uc_stack.ss_sp);
+    free(running->context);
     free(running);
     running = NULL;
     scheduler();
